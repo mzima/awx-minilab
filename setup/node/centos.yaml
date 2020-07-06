@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Install packages
+    yum:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - epel-release
+      - python3
+
+  - name: Add ansible remote user
+    user:
+      name: ansible
+      group: vagrant
+
+  - name: Add ansible ssh key
+    authorized_key:
+      user: ansible
+      state: present
+      key: '{{ item }}'
+    with_file:
+    - "{{ playbook_dir }}/../../keys/id_rsa.pub"

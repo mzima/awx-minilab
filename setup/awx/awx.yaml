@@ -1,0 +1,109 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Import RHEL key
+    rpm_key:
+      state: present
+      key: https://www.redhat.com/security/fd431d51.txt
+
+  - name: Add Docker CE repo
+    command: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+  - name: Add Tower repo
+    command: dnf config-manager --add-repo https://releases.ansible.com/ansible-tower/cli/ansible-tower-cli-centos8.repo
+  
+  - name: Add Epel repo
+    yum:
+      name: epel-release
+      state: present
+
+  - name: Install packages
+    yum:
+      name:
+        - ansible
+        - ansible-tower-cli
+        - make
+        - git
+        - python3
+        - python3-pip
+        - dnsmasq
+      state: present
+      update_cache: yes
+
+  - name: Install Docker CE
+    command: dnf install -y --nobest docker-ce
+
+  - name: Install Tower CLI
+    command: pip3 install ansible-tower-cli
+
+  - name: Install Docker compose
+    command: pip3 install docker-compose
+
+  - name: Create Docker compose symbolic link
+    file:
+      src: /usr/local/bin/docker-compose
+      dest: /usr/bin/docker-compose
+      state: link
+
+  - name: Create Tower CLI symbolic link
+    file:
+      src: /usr/local/bin/tower-cli
+      dest: /usr/bin/tower-cli
+      state: link
+  
+  - name: Copy Tower CLI tower_cli.cfg
+    command: cp /vagrant/setup/awx/files/tower_cli.cfg /home/vagrant/.tower_cli.cfg
+
+  - name: Configure SELinux
+    selinux:
+      policy: targeted
+      state: permissive
+
+  - name: Configure Services
+    service:
+      name: "{{ item }}"
+      state: started
+    with_items:
+      - docker
+      - dnsmasq
+
+  - name: Add ansible remote user
+    user:
+      name: ansible
+      group: vagrant
+
+  - name: Set ansible SSH authorized keys
+    authorized_key:
+      user: ansible
+      state: present
+      key: '{{ item }}'
+    with_file:
+    - "{{ playbook_dir }}/../../keys/id_rsa.pub"
+
+  - name: Upload ansible private SSH key
+    copy:
+      src: "{{ playbook_dir }}/../../keys/id_rsa"
+      dest: /home/ansible/.ssh/id_rsa
+      owner: ansible
+      group: vagrant
+      mode: 0700
+
+  - name: Checkout AWX Github repo
+    git:
+      repo: https://github.com/ansible/awx
+      dest: /tmp/awx
+      force: yes
+  
+  - name: Replace AWX inventory file
+    copy:
+      src: "{{ playbook_dir }}/files/inventory"
+      dest: /tmp/awx/installer/inventory
+
+  - name: Install AWX
+    command: ansible-playbook -i inventory install.yml
+    args:
+      chdir: /tmp/awx/installer
+
+  - name: Deploy demo config to AWX
+    command: /vagrant/tools/deploy_demo.sh

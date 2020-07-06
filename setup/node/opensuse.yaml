@@ -1,0 +1,30 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Install packages
+    zypper:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - python3
+
+  - name: Add ansible remote user
+    user:
+      name: ansible
+      group: vagrant
+
+  - name: Add ansible ssh key
+    authorized_key:
+      user: ansible
+      state: present
+      key: '{{ item }}'
+    with_file:
+    - "{{ playbook_dir }}/../../keys/id_rsa.pub"
+
+  - name: Add ansible user to sudoers file
+    lineinfile:
+      path: /etc/sudoers
+      regexp: '^ansible'
+      line: 'ansible ALL=(ALL) NOPASSWD: ALL'

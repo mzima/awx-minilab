@@ -1,0 +1,29 @@
+# AWX MiniLab Configuration
+
+# Lab settings
+lab:
+  domain: mini.lab
+  provision: true
+
+# AWX server settings
+awx:
+  cpu: 4
+  memory: 4096
+  hostname: awx
+  port_http: 8080
+  port_https: 8443
+
+# AWX node settings
+nodes:
+  centos:
+    count: 1
+    cpu: 1
+    memory: 1024
+    image: centos/7
+    hostname: centos
+  opensuse:
+    count: 1
+    cpu: 1
+    memory: 1024
+    image: opensuse/Tumbleweed.x86_64
+    hostname: opensuse
