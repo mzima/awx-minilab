@@ -64,6 +64,7 @@
     service:
       name: "{{ item }}"
       state: started
+      enabled: yes
     with_items:
       - docker
       - dnsmasq
