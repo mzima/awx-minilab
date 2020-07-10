@@ -63,10 +63,12 @@ nodes:
     memory: 1024
     image: centos/7
     hostname: centos
+    setup: setup/node/centos.yaml
   opensuse:
     count: 1
     cpu: 1
     memory: 1024
     image: opensuse/Tumbleweed.x86_64
     hostname: opensuse
+    setup: setup/node/opensuse.yaml
 ````
