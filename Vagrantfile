@@ -67,9 +67,7 @@ Vagrant.configure("2") do |config|
                 node.vm.network "private_network", ip: ip, virtualbox__intnet: true
                 if lab_provision
                     node.vm.provision "ansible" do |ansible|
-                        if(File.exist?("setup/node/#{os}.yaml"))
-                            ansible.playbook = "setup/node/#{os}.yaml"
-                        end
+                        ansible.playbook = item['setup']
                     end
                 end
                 puts "Node: " + hostname.ljust(16) + ip
